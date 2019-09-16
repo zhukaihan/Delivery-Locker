@@ -11,10 +11,10 @@
 # hlsearch on (H) or off (h):
 ~h
 # Command Line History (newest to oldest):
-:q
-|2,0,1568539119,,"q"
 :wq
-|2,0,1568460465,,"wq"
+|2,0,1568625931,,"wq"
+:q
+|2,0,1568625873,,"q"
 :q!
 |2,0,1568456594,,"q!"
 :.q!
@@ -35,39 +35,260 @@
 # Debug Line History (newest to oldest):
 
 # Registers:
-""-	CHAR	0
+""1	LINE	0
+	>>>>>>> e9e9d966deafac57211e1fb1e92c27e737d87a16
+|3,1,1,1,1,0,1568625915,">>>>>>> e9e9d966deafac57211e1fb1e92c27e737d87a16"
+"2	LINE	0
+	<<<<<<< HEAD
+	# Byte-compiled / optimized / DLL files
+	__pycache__/
+	*.py[cod]
+	*$py.class
+	
+	# C extensions
+	*.so
+	
+	# Distribution / packaging
+	.Python
+	build/
+	develop-eggs/
+	dist/
+	downloads/
+	eggs/
+	.eggs/
+	lib/
+	lib64/
+	parts/
+	sdist/
+	var/
+	wheels/
+	*.egg-info/
+	.installed.cfg
+	*.egg
+	MANIFEST
+	
+	# PyInstaller
+	#  Usually these files are written by a python script from a template
+	#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+	*.manifest
+	*.spec
+	
+	# Installer logs
+	pip-log.txt
+	pip-delete-this-directory.txt
+	
+	# Unit test / coverage reports
+	htmlcov/
+	.tox/
+	.coverage
+	.coverage.*
+	.cache
+	nosetests.xml
+	coverage.xml
+	*.cover
+	.hypothesis/
+	.pytest_cache/
+	
+|3,0,2,1,50,0,1568625912,"<<<<<<< HEAD","# Byte-compiled / optimized / DLL files","__pycache__/","*.py[cod]","*$py.class","","# C extensions","*.so","","# Distribution / packaging",".Python","build/","develop-eggs/","dist/","downloads/","eggs/",".eggs/","lib/","lib64/","parts/","sdist/","var/","wheels/","*.egg-info/",".installed.cfg","*.egg","MANIFEST","","# PyInstaller",>72
+|<"#  Usually these files are written by a python script from a template","#  before PyInstaller builds the exe, so as to inject date/other infos into it.","*.manifest","*.spec","","# Installer logs","pip-log.txt","pip-delete-this-directory.txt","","# Unit test / coverage reports","htmlcov/",".tox/",".coverage",".coverage.*",".cache","nosetests.xml","coverage.xml","*.cover",".hypothesis/",".pytest_cache/",""
+"3	LINE	0
+	<<<<<<< HEAD
+|3,0,3,1,1,0,1568625883,"<<<<<<< HEAD"
+"4	LINE	0
+	# && sudo poweroff
+	=======
+	exec openbox-session & python /home/alarm/main.py
+	>>>>>>> e9e9d966deafac57211e1fb1e92c27e737d87a16
+|3,0,4,1,4,0,1568625882,"# && sudo poweroff","=======","exec openbox-session & python /home/alarm/main.py",">>>>>>> e9e9d966deafac57211e1fb1e92c27e737d87a16"
+"-	CHAR	0
 	#
-|3,1,36,0,1,0,1568460464,"#"
+|3,0,36,0,1,0,1568460464,"#"
 
 # File marks:
-'0  1  0  ~/errlog
-|4,48,1,0,1568539119,"~/errlog"
-'1  1  0  ~/errlog
-|4,49,1,0,1568539074,"~/errlog"
-'2  1  0  ~/errlog
-|4,50,1,0,1568539066,"~/errlog"
-'3  1  0  ~/errlog
-|4,51,1,0,1568539066,"~/errlog"
+'0  104  0  ~/.gitignore
+|4,48,104,0,1568625931,"~/.gitignore"
+'1  2  0  ~/.xinitrc
+|4,49,2,0,1568625885,"~/.xinitrc"
+'2  1  0  ~/xinitrc
+|4,50,1,0,1568625873,"~/xinitrc"
+'3  7  10  ~/main.py
+|4,51,7,10,1568625820,"~/main.py"
 '4  1  0  ~/errlog
-|4,52,1,0,1568538968,"~/errlog"
+|4,52,1,0,1568539119,"~/errlog"
 '5  1  0  ~/errlog
-|4,53,1,0,1568538968,"~/errlog"
+|4,53,1,0,1568539074,"~/errlog"
 '6  1  0  ~/errlog
-|4,54,1,0,1568538968,"~/errlog"
+|4,54,1,0,1568539066,"~/errlog"
 '7  1  0  ~/errlog
-|4,55,1,0,1568538968,"~/errlog"
-'8  7  42  ~/main.py
-|4,56,7,42,1568489192,"~/main.py"
-'9  8  0  ~/.bash_profile
-|4,57,8,0,1568460465,"~/.bash_profile"
+|4,55,1,0,1568539066,"~/errlog"
+'8  1  0  ~/errlog
+|4,56,1,0,1568538968,"~/errlog"
+'9  1  0  ~/errlog
+|4,57,1,0,1568538968,"~/errlog"
 
 # Jumplist (newest first):
+-'  104  0  ~/.gitignore
+|4,39,104,0,1568625931,"~/.gitignore"
+-'  1  0  ~/.gitignore
+|4,39,1,0,1568625925,"~/.gitignore"
+-'  105  0  ~/.gitignore
+|4,39,105,0,1568625919,"~/.gitignore"
+-'  7  0  ~/.gitignore
+|4,39,7,0,1568625914,"~/.gitignore"
+-'  2  0  ~/.xinitrc
+|4,39,2,0,1568625885,"~/.xinitrc"
+-'  2  0  ~/.xinitrc
+|4,39,2,0,1568625885,"~/.xinitrc"
+-'  1  0  ~/xinitrc
+|4,39,1,0,1568625873,"~/xinitrc"
+-'  1  0  ~/xinitrc
+|4,39,1,0,1568625873,"~/xinitrc"
+-'  1  0  ~/xinitrc
+|4,39,1,0,1568625873,"~/xinitrc"
+-'  1  0  ~/xinitrc
+|4,39,1,0,1568625873,"~/xinitrc"
+-'  7  10  ~/main.py
+|4,39,7,10,1568625820,"~/main.py"
+-'  7  10  ~/main.py
+|4,39,7,10,1568625820,"~/main.py"
+-'  7  10  ~/main.py
+|4,39,7,10,1568625820,"~/main.py"
+-'  7  10  ~/main.py
+|4,39,7,10,1568625820,"~/main.py"
+-'  7  10  ~/main.py
+|4,39,7,10,1568625820,"~/main.py"
+-'  7  10  ~/main.py
+|4,39,7,10,1568625820,"~/main.py"
+-'  7  10  ~/main.py
+|4,39,7,10,1568625820,"~/main.py"
+-'  7  10  ~/main.py
+|4,39,7,10,1568625820,"~/main.py"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539119,"~/errlog"
 -'  1  0  ~/errlog
 |4,39,1,0,1568539119,"~/errlog"
 -'  1  0  ~/errlog
 |4,39,1,0,1568539074,"~/errlog"
 -'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539074,"~/errlog"
+-'  1  0  ~/errlog
 |4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568539066,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
+-'  1  0  ~/errlog
+|4,39,1,0,1568538968,"~/errlog"
 -'  1  0  ~/errlog
 |4,39,1,0,1568538968,"~/errlog"
 -'  7  42  ~/main.py
@@ -102,176 +323,38 @@
 |4,39,7,42,1568489192,"~/main.py"
 -'  7  42  ~/main.py
 |4,39,7,42,1568489192,"~/main.py"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460465,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568460337,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
--'  8  0  ~/.bash_profile
-|4,39,8,0,1568457740,"~/.bash_profile"
+-'  7  42  ~/main.py
+|4,39,7,42,1568489192,"~/main.py"
+-'  7  42  ~/main.py
+|4,39,7,42,1568489192,"~/main.py"
 
 # History of marks within files (newest to oldest):
 
-> ~/errlog
-	*	1568539108	0
+> ~/.gitignore
+	*	1568625927	0
+	"	104	0
+	.	105	0
+	+	1	0
+	+	105	0
+
+> ~/.xinitrc
+	*	1568625883	0
+	"	2	0
+	^	2	49
+	.	2	0
+	+	1	19
+	+	2	20
+	+	2	48
+	+	4	0
+	+	2	0
+
+> ~/xinitrc
+	*	1568625870	0
 	"	1	0
 
 > ~/main.py
-	*	1568489189	0
-	"	7	42
+	*	1568625818	0
+	"	7	10
 	^	7	43
 	.	7	42
 	+	9	50
@@ -279,6 +362,10 @@
 	+	9	50
 	+	6	0
 	+	7	42
+
+> ~/errlog
+	*	1568539108	0
+	"	1	0
 
 > ~/.bash_profile
 	*	1568460464	0
@@ -299,15 +386,6 @@
 	.	1	174
 	+	1	94
 	+	1	174
-
-> ~/.xinitrc
-	*	1568455977	0
-	"	3	48
-	^	3	49
-	.	3	48
-	+	1	19
-	+	3	20
-	+	3	48
 
 > ~/plymouth/PKGBUILD
 	*	1568455544	0
