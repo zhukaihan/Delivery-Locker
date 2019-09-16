@@ -1,9 +1,13 @@
-# Git
+# Others
 .git-credentials
 .gitconfig
 .viminfo
-.errlog
-.outlog
+errlog
+outlog
+.bash_logout
+.bash_history
+.Xauthority
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
