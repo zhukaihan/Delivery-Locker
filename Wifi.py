@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import wifi
+import wifinetctl as wifi
 
 
 def Search():
@@ -41,36 +41,40 @@ def Connect(ssid, password=None):
 
         # Already Saved from Setting
         if savedcell:
-            savedcell.activate()
-            return cell
+            try:
+                savedcell.activate()
+                return cell
 
-        # First time to conenct
-        else:
-            if cell.encrypted:
-                if password:
-                    scheme = Add(cell, password)
+            # Wrong Password, treat as new connect
+            except wifi.exceptions.ConnectionError:
+                Delete(ssid)
 
-                    try:
-                        scheme.activate()
-
-                    # Wrong Password
-                    except wifi.exceptions.ConnectionError:
-                        Delete(ssid)
-                        return False
-
-                    return cell
-                else:
-                    return False
-            else:
-                scheme = Add(cell)
+        # First time to connect
+        if cell.encrypted:
+            if password:
+                scheme = Add(cell, password)
 
                 try:
                     scheme.activate()
+
+                # Wrong Password
                 except wifi.exceptions.ConnectionError:
                     Delete(ssid)
                     return False
 
                 return cell
+            else:
+                return False
+        else:
+            scheme = Add(cell)
+
+            try:
+                scheme.activate()
+            except wifi.exceptions.ConnectionError:
+                Delete(ssid)
+                return False
+
+            return cell
     
     return False
 
@@ -97,9 +101,42 @@ def Delete(ssid):
     return False
 
 
+# Return True is the wifi has connected to a know network successfully. 
+# Otherwise, it returns an array of cells that are connectable. 
+def SearchAndConnectKnown():
+    # get all cells from the air
+    # wifiCells = Search()
+    # ssids = [cell.ssid for cell in wifiCells]
+
+    # schemes = list(wifi.Scheme.all("wlan0"))
+
+    # for scheme in schemes:
+    #     ssid = scheme.options.get('wpa-ssid', scheme.options.get('wireless-essid'))
+    #     if ssid in ssids:
+    #         try:
+    #             scheme.activate()
+    #             return True
+    #         except:
+    #             pass
+    # return wifiCells
+
+    wifiCells = Search()
+    for cell in wifiCells:
+        try:
+            if FindFromSavedList(cell.ssid):
+                if Connect(cell.ssid):
+                    return True
+        except:
+            pass
+    return wifiCells
+
+
 if __name__ == '__main__':
+    Delete("MySpectrumWiFifb-2G")
+    Delete("MySpectrumWiFifb-5G")
     # Search WiFi and return WiFi list
-    print(Search())
+    # print(SearchAndConnectKnown())
+    # print(Connect("MySpectrumWiFifb-5G", "hockeypraise107"))
 
     # Connect WiFi with password & without password
     # print Connect('OpenWiFi')

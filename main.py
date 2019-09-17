@@ -3,17 +3,20 @@
 # https://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
 
 import tkinter as tk
-from tkinter import font  as tkfont
+from tkinter import font as tkfont
 import Wifi
+from vKeyboard import vKeyboard
 
 class Application(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
-        self.wm_attributes('-fullscreen', 'true')
-
-        self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
+        self.wm_attributes('-fullscreen', True)
+        # w, h = self.winfo_screenwidth(), self.winfo_screenheight()
+        # # use the next line if you also want to get rid of the titlebar
+        # self.overrideredirect(1)
+        # self.geometry("%dx%d+0+0" % (w, h))
 
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
@@ -23,23 +26,28 @@ class Application(tk.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        self.frames = {}
+        self.pages = {}
         for F in (ConfigPage, AdPage, LockerPage):
             page_name = F.__name__
-            frame = F(parent=container, controller=self)
-            self.frames[page_name] = frame
+            page = F(parent=container, controller=self)
+            self.pages[page_name] = page
 
             # put all of the pages in the same location;
             # the one on the top of the stacking order
             # will be the one that is visible.
-            frame.grid(row=0, column=0, sticky="nsew")
+            page.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame("ConfigPage")
+        self.showPage("ConfigPage")
 
-    def show_frame(self, page_name):
+    def showPage(self, page_name):
         '''Show a frame for the given page name'''
-        frame = self.frames[page_name]
-        frame.tkraise()
+        page = self.pages[page_name]
+        page.tkraise()
+
+        try:
+            page.pageDidShown()
+        except:
+            pass
 
 
 class ConfigPage(tk.Frame):
@@ -47,22 +55,50 @@ class ConfigPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        label = tk.Label(self, text="设置Wifi", font=controller.title_font)
+        label = tk.Label(self, text="设置Wifi")
         label.pack(side="top", fill="x", pady=10)
 
-        wifiList = tk.Listbox(controller, selectmode=tk.SINGLE)
-        wifiList.pack()
+        self.wifiList = tk.Listbox(self, selectmode=tk.SINGLE)
+        self.wifiList.configure(exportselection=False)
+        self.wifiList.pack()
 
-        wifis = Wifi.Search()
-        for cell in wifis:
-            wifiList.insert(tk.END, cell.ssid)
+        self.wifiPasswdEntry = tk.Entry(self)
+        self.wifiPasswdEntry.pack()
 
-        button1 = tk.Button(self, text="Go to AdPage",
-                            command=lambda: controller.show_frame("AdPage"))
-        button2 = tk.Button(self, text="Go to LockerPage",
-                            command=lambda: controller.show_frame("LockerPage"))
-        button1.pack()
-        button2.pack()
+        wifiConnectButton = tk.Button(self, text="连接Wifi",
+                            command=lambda: self.connectWifi())
+        wifiConnectButton.pack()
+
+        self.wifiAlertLabelStr = tk.StringVar()
+        self.wifiAlertLabel = tk.Label(self, textvariable=self.wifiAlertLabelStr)
+        self.wifiAlertLabel.pack()
+
+        
+        self.kb = vKeyboard(parent=self, attach=self.wifiPasswdEntry)
+        self.kb.listenForEntry(self.wifiPasswdEntry)
+
+    def pageDidShown(self):
+        wifis = Wifi.SearchAndConnectKnown()
+        if wifis is True: # Wifi is successfully connected to a known network. 
+            self.controller.showPage("AdPage")
+        else:
+            for cell in wifis:
+                self.wifiList.insert(tk.END, cell.ssid)
+
+    def connectWifi(self):
+        ssid = self.wifiList.get(self.wifiList.curselection()[0])
+        passwd = self.wifiPasswdEntry.get()
+        
+        try:
+            connectResult = Wifi.Connect(str(ssid), str(passwd))
+        
+            if connectResult is False:
+                self.wifiAlertLabelStr.set("WiFi无法连接，请检查密码是否正确")
+            else:
+                self.wifiAlertLabelStr.set("连接成功")
+                self.controller.showPage("AdPage")
+        except:
+            self.wifiAlertLabelStr.set("WiFi无法连接，请检查密码是否正确")
 
 
 class AdPage(tk.Frame):
@@ -70,10 +106,10 @@ class AdPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        label = tk.Label(self, text="广告", font=controller.title_font)
+        label = tk.Label(self, text="广告")
         label.pack(side="top", fill="x", pady=10)
         button = tk.Button(self, text="Click to open locker",
-                           command=lambda: controller.show_frame("LockerPage"))
+                           command=lambda: controller.showPage("LockerPage"))
         button.pack()
 
 
@@ -82,10 +118,10 @@ class LockerPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        label = tk.Label(self, text="放东西", font=controller.title_font)
+        label = tk.Label(self, text="放东西")
         label.pack(side="top", fill="x", pady=10)
         button = tk.Button(self, text="Play Ad after 30 secs",
-                           command=lambda: controller.show_frame("AdPage"))
+                           command=lambda: controller.showPage("AdPage"))
         button.pack()
 
 

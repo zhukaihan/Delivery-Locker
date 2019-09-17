@@ -7,6 +7,7 @@ outlog
 .bash_logout
 .bash_history
 .Xauthority
+.python_history
 
 
 # Byte-compiled / optimized / DLL files
