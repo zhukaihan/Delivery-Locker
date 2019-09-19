@@ -8,7 +8,8 @@ outlog
 .bash_history
 .Xauthority
 .python_history
-id
+lockerConfig
+*.mp4
 
 
 # Byte-compiled / optimized / DLL files

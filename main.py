@@ -7,11 +7,29 @@ from tkinter import font as tkfont
 import Wifi
 from vKeyboard import vKeyboard
 import requests
+import imageio
+from PIL import ImageTk, Image
+import json
+import asyncio
+
+LOCKER_CONFIG_FILE = "lockerConfig"
+API_BASE_URL = "http://shgreenpool.com/Delivery-Locker-Server/"
+LOCKER_CONFIG_API = "locker.php"
+AD_CONFIG_API = "ad.php"
 
 class Application(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+
+        self.lockerConfig = {}
+        try:
+            with open(LOCKER_CONFIG_FILE,"r") as f:
+                lockerConfigFileContent = f.read()
+                if (lockerConfigFileContent != ""):
+                    self.lockerConfig = json.loads(lockerConfigFileContent)
+        except:
+            pass
 
         self.wm_attributes('-fullscreen', True)
         # w, h = self.winfo_screenwidth(), self.winfo_screenheight()
@@ -49,6 +67,21 @@ class Application(tk.Tk):
             page.pageDidShown()
         except:
             pass
+
+    def setLockerConfig(self, params):
+        for key in params:
+            self.lockerConfig[key] = params[key]
+        lockerConfigString = json.dumps(self.lockerConfig)
+        with open(LOCKER_CONFIG_FILE,"w+") as f:
+            f.write(lockerConfigString)
+    
+    def getLockerConfig(self, key):
+        try:
+            value = self.lockerConfig[key]
+            return value
+        except:
+            return None
+
 
 
 class WifiConfigPage(tk.Frame):
@@ -108,7 +141,7 @@ class WifiConfigPage(tk.Frame):
 
 
 class LockerConfigPage(tk.Frame):
-    API_URL = "http://shgreenpool.com/Delivery-Locker-Server/locker.php"
+    API_URL = API_BASE_URL + LOCKER_CONFIG_API
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -128,21 +161,15 @@ class LockerConfigPage(tk.Frame):
 
 
     def pageDidShown(self):
-        self.lockerId = None
-        # Open the file "id" for lockerId. 
-        try:
-            with open("id","r") as idFile:
-                self.lockerId = idFile.read()
-        except:
-            pass
+        # Check if lockerId has been configured. 
+        self.lockerId = self.controller.getLockerConfig("lockerId")
 
-        # If the file exists and its content is valid, the locker has a lockerId, which is its content. 
+        # If the lockerId exists and it is valid, the locker has a lockerId, which is its content. 
         if (not (self.lockerId is None)) and (self.lockerId != ""):
-            self.controller.lockerId = self.lockerId
             self.goToNextPage()
             return
         
-        # If the file doesn't exist, the locker does not have a lockerId. 
+        # If the lockerId doesn't exist, the locker does not have a lockerId. 
         # We need to do a POST to the server to get a new lockerId. 
         self.lockerId = "FAILED"
         i = 0
@@ -160,16 +187,14 @@ class LockerConfigPage(tk.Frame):
         # User should finished adding lockerId to the user's Wechat. 
         # Verify if added accountId by a GET request to the server. 
         r = requests.get(url=self.API_URL, params={"lockerId": self.lockerId})
-        
+
         if r.text == "FAILED": # Have not yet added an accountId. 
             self.alertLabelStr.set("未验证成功。此设备ID为" + self.lockerId + "，请打开微信服务号添加此设备。添加完毕后点击下方按钮验证。")
         elif r.text == "SUCCESS": # Added an accountId. 
             self.alertLabelStr.set("验证成功。")
 
             # Recored the lockerId. 
-            self.controller.lockerId = self.lockerId
-            with open("id","w+") as idFile:
-                idFile.write(self.lockerId)
+            self.controller.setLockerConfig({"lockerId": self.lockerId})
             
             self.goToNextPage()
             
@@ -179,15 +204,79 @@ class LockerConfigPage(tk.Frame):
         
 
 class AdPage(tk.Frame):
+    API_URL = API_BASE_URL + AD_CONFIG_API
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        label = tk.Label(self, text="广告")
-        label.pack(side="top", fill="x", pady=10)
+
+        self.adVideolabel = tk.Label(self, text="广告")
+        self.adVideolabel.pack(side=tk.TOP, fill=tk.BOTH)
+
         button = tk.Button(self, text="Click to open locker",
                            command=lambda: controller.showPage("LockerPage"))
-        button.pack()
+        button.pack(side=tk.BOTTOM, fill=tk.X)
+
+        adFileName = self.controller.getLockerConfig("adFileName")
+        
+        r = requests.get(url=self.API_URL)
+        if adFileName is None or r.text > adFileName: # The ad has been updated. Download new ad. 
+            download_file(
+                API_BASE_URL + r.text, 
+                callback=(lambda filename: self.controller.setLockerConfig({"adFileName": filename}))
+            )
+        
+        self.adVideo = None
+
+        self.alertLabelStr = tk.StringVar()
+        self.alertLabel = tk.Label(self, textvariable=self.alertLabelStr)
+        self.alertLabelStr.set("banana")
+        self.alertLabel.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def pageDidShown(self):
+        self.showFrame()
+    
+    def showFrame(self):
+        self.adVideolabel.after(10, self.showFrame)
+        if self.controller.getLockerConfig("adFileName") is None:
+            return
+        if self.adVideo is None:
+            # self.adVideo = cv2.VideoCapture(self.controller.getLockerConfig("adFileName"))
+            self.adVideo = imageio.get_reader(self.controller.getLockerConfig("adFileName"))
+        # elif not self.adVideo.isOpened():
+            # self.adVideo.release()
+            # self.adVideo = cv2.VideoCapture(self.controller.getLockerConfig("adFileName"))
+        
+        try:
+            image = self.adVideo.get_next_data()
+        except:
+            self.adVideo.close()
+            self.adVideo = imageio.get_reader(self.controller.getLockerConfig("adFileName"))
+
+        
+        # _, frame = self.adVideo.read()
+        # image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+        img = Image.fromarray(image)
+        imgtk = ImageTk.PhotoImage(image = img)
+        self.adVideolabel.imgtk = imgtk
+        self.adVideolabel.configure(image=imgtk)
+        self.adVideolabel.after(10, lambda: self.showFrame())
+        self.alertLabelStr.set("apple")
+
+
+async def async_download_file(url, callback=None):
+    local_filename = url.split('/')[-1]
+    # NOTE the stream=True parameter below
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192): 
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+    return local_filename
+
+def download_file(url, callback=None):
+    asyncio.run(async_download_file(url, callback))
 
 
 class LockerPage(tk.Frame):
