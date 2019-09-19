@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import font as tkfont
 import Wifi
 from vKeyboard import vKeyboard
+import requests
 
 class Application(tk.Tk):
 
@@ -27,7 +28,7 @@ class Application(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.pages = {}
-        for F in (ConfigPage, AdPage, LockerPage):
+        for F in (WifiConfigPage, LockerConfigPage, AdPage, LockerPage):
             page_name = F.__name__
             page = F(parent=container, controller=self)
             self.pages[page_name] = page
@@ -37,7 +38,7 @@ class Application(tk.Tk):
             # will be the one that is visible.
             page.grid(row=0, column=0, sticky="nsew")
 
-        self.showPage("ConfigPage")
+        self.showPage("WifiConfigPage")
 
     def showPage(self, page_name):
         '''Show a frame for the given page name'''
@@ -50,11 +51,12 @@ class Application(tk.Tk):
             pass
 
 
-class ConfigPage(tk.Frame):
+class WifiConfigPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
         label = tk.Label(self, text="设置Wifi")
         label.pack(side="top", fill="x", pady=10)
 
@@ -77,10 +79,11 @@ class ConfigPage(tk.Frame):
         self.kb = vKeyboard(parent=self, attach=self.wifiPasswdEntry)
         self.kb.listenForEntry(self.wifiPasswdEntry)
 
+
     def pageDidShown(self):
         wifis = Wifi.SearchAndConnectKnown()
         if wifis is True: # Wifi is successfully connected to a known network. 
-            self.controller.showPage("AdPage")
+            self.goToNextPage()
         else:
             for cell in wifis:
                 self.wifiList.insert(tk.END, cell.ssid)
@@ -96,10 +99,84 @@ class ConfigPage(tk.Frame):
                 self.wifiAlertLabelStr.set("WiFi无法连接，请检查密码是否正确")
             else:
                 self.wifiAlertLabelStr.set("连接成功")
-                self.controller.showPage("AdPage")
+                self.goToNextPage()
         except:
             self.wifiAlertLabelStr.set("WiFi无法连接，请检查密码是否正确")
 
+    def goToNextPage(self):
+        self.controller.showPage("LockerConfigPage")
+
+
+class LockerConfigPage(tk.Frame):
+    API_URL = "http://shgreenpool.com/Delivery-Locker-Server/locker.php"
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+        label = tk.Label(self, text="设置设备")
+        label.pack(side="top", fill="x", pady=10)
+
+        # The verify button is initially unclickable. 
+        self.verifyButton = tk.Button(self, text="验证", state=tk.DISABLED,
+                            command=lambda: self.verifyLocker())
+        self.verifyButton.pack()
+
+        self.alertLabelStr = tk.StringVar()
+        self.alertLabel = tk.Label(self, textvariable=self.alertLabelStr)
+        self.alertLabel.pack()
+
+
+    def pageDidShown(self):
+        self.lockerId = None
+        # Open the file "id" for lockerId. 
+        try:
+            with open("id","r") as idFile:
+                self.lockerId = idFile.read()
+        except:
+            pass
+
+        # If the file exists and its content is valid, the locker has a lockerId, which is its content. 
+        if (not (self.lockerId is None)) and (self.lockerId != ""):
+            self.controller.lockerId = self.lockerId
+            self.goToNextPage()
+            return
+        
+        # If the file doesn't exist, the locker does not have a lockerId. 
+        # We need to do a POST to the server to get a new lockerId. 
+        self.lockerId = "FAILED"
+        i = 0
+        while self.lockerId == "FAILED" and i < 10: # Try 10 times. 
+            self.alertLabelStr.set("尝试连接中。。。")
+            r = requests.post(url=self.API_URL)
+            self.lockerId = r.text
+            i += 1
+        
+        self.alertLabelStr.set("此设备ID为" + self.lockerId + "，请打开微信服务号添加此设备。添加完毕后点击下方按钮验证。")
+        # Set the verifyButton to be clickable. 
+        self.verifyButton.config(state="normal")
+
+    def verifyLocker(self):
+        # User should finished adding lockerId to the user's Wechat. 
+        # Verify if added accountId by a GET request to the server. 
+        r = requests.get(url=self.API_URL, params={"lockerId": self.lockerId})
+        
+        if r.text == "FAILED": # Have not yet added an accountId. 
+            self.alertLabelStr.set("未验证成功。此设备ID为" + self.lockerId + "，请打开微信服务号添加此设备。添加完毕后点击下方按钮验证。")
+        elif r.text == "SUCCESS": # Added an accountId. 
+            self.alertLabelStr.set("验证成功。")
+
+            # Recored the lockerId. 
+            self.controller.lockerId = self.lockerId
+            with open("id","w+") as idFile:
+                idFile.write(self.lockerId)
+            
+            self.goToNextPage()
+            
+
+    def goToNextPage(self):
+        self.controller.showPage("AdPage")
+        
 
 class AdPage(tk.Frame):
 
