@@ -56,7 +56,7 @@ class Application(tk.Tk):
             # will be the one that is visible.
             page.grid(row=0, column=0, sticky="nsew")
 
-        self.showPage("WifiConfigPage")
+        self.showPage("AdPage")
 
     def showPage(self, page_name):
         '''Show a frame for the given page name'''
@@ -226,42 +226,40 @@ class AdPage(tk.Frame):
                 callback=(lambda filename: self.controller.setLockerConfig({"adFileName": filename}))
             )
         
-        self.adVideo = None
-
-        self.alertLabelStr = tk.StringVar()
-        self.alertLabel = tk.Label(self, textvariable=self.alertLabelStr)
-        self.alertLabelStr.set("banana")
-        self.alertLabel.pack(side=tk.BOTTOM, fill=tk.X)
+        self.adVideoSource = None
+        self.adVideoImgs = []
+        self.adVideoI = 0
+        self.isAdVideoFromImgs = False
 
     def pageDidShown(self):
-        self.showFrame()
+        self.after(10, self.showFrame)
     
     def showFrame(self):
-        self.adVideolabel.after(10, self.showFrame)
-        if self.controller.getLockerConfig("adFileName") is None:
-            return
-        if self.adVideo is None:
-            # self.adVideo = cv2.VideoCapture(self.controller.getLockerConfig("adFileName"))
-            self.adVideo = imageio.get_reader(self.controller.getLockerConfig("adFileName"))
-        # elif not self.adVideo.isOpened():
-            # self.adVideo.release()
-            # self.adVideo = cv2.VideoCapture(self.controller.getLockerConfig("adFileName"))
-        
-        try:
-            image = self.adVideo.get_next_data()
-        except:
-            self.adVideo.close()
-            self.adVideo = imageio.get_reader(self.controller.getLockerConfig("adFileName"))
+        if not self.isAdVideoFromImgs:
+            if self.adVideoSource is None:
+                if self.controller.getLockerConfig("adFileName") is None:
+                    self.after(100, self.showFrame)
+                    return
+                adFileName = "/home/alarm/" + self.controller.getLockerConfig("adFileName")
+                self.adVideoSource = imageio.get_reader(adFileName)
+            
+            try:
+                image = self.adVideoSource.get_next_data()
 
-        
-        # _, frame = self.adVideo.read()
-        # image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-        img = Image.fromarray(image)
-        imgtk = ImageTk.PhotoImage(image = img)
+                imgtk = ImageTk.PhotoImage(image=Image.fromarray(image))
+                self.adVideoImgs.append(imgtk)
+                self.adVideoI += 1
+            except:
+                self.adVideoI = 0
+                self.isAdVideoFromImgs = True
+
+        if self.isAdVideoFromImgs:
+            imgtk = self.adVideoImgs[self.adVideoI]
+            self.adVideoI = (self.adVideoI + 1) % len(self.adVideoImgs)
+
         self.adVideolabel.imgtk = imgtk
         self.adVideolabel.configure(image=imgtk)
-        self.adVideolabel.after(10, lambda: self.showFrame())
-        self.alertLabelStr.set("apple")
+        self.after(10, self.showFrame)
 
 
 async def async_download_file(url, callback=None):
@@ -273,6 +271,11 @@ async def async_download_file(url, callback=None):
             for chunk in r.iter_content(chunk_size=8192): 
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
+    try:
+        if not (callback is None):
+            callback(local_filename)
+    except:
+        pass
     return local_filename
 
 def download_file(url, callback=None):
