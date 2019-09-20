@@ -11,6 +11,7 @@ import imageio
 from PIL import ImageTk, Image
 import json
 import asyncio
+import os
 
 LOCKER_CONFIG_FILE = "lockerConfig"
 API_BASE_URL = "http://shgreenpool.com/Delivery-Locker-Server/"
@@ -56,7 +57,7 @@ class Application(tk.Tk):
             # will be the one that is visible.
             page.grid(row=0, column=0, sticky="nsew")
 
-        self.showPage("AdPage")
+        self.showPage("WifiConfigPage")
 
     def showPage(self, page_name):
         '''Show a frame for the given page name'''
@@ -218,18 +219,31 @@ class AdPage(tk.Frame):
         button.pack(side=tk.BOTTOM, fill=tk.X)
 
         adFileName = self.controller.getLockerConfig("adFileName")
-        
-        r = requests.get(url=self.API_URL)
-        if adFileName is None or r.text > adFileName: # The ad has been updated. Download new ad. 
-            download_file(
-                API_BASE_URL + r.text, 
-                callback=(lambda filename: self.controller.setLockerConfig({"adFileName": filename}))
-            )
-        
         self.adVideoSource = None
         self.adVideoImgs = []
         self.adVideoI = 0
+        self.adVideoFPS = 100
         self.isAdVideoFromImgs = False
+        
+        r = requests.get(url=self.API_URL)
+        if adFileName is None or r.text > adFileName: # The ad has been updated or file. Download new ad. 
+            download_file(API_BASE_URL + r.text, callback=self.setAndLoadNewAdVideo)
+        else:
+            try:
+                self.adVideoSource = imageio.get_reader(adFileName)
+            except:
+                download_file(API_BASE_URL + r.text, callback=self.setAndLoadNewAdVideo)
+        
+
+    def setAndLoadNewAdVideo(self, filename):
+        try:
+            adFileName = self.controller.getLockerConfig("adFileName")
+            if filename != adFileName:
+                os.remove(self.controller.getLockerConfig("adFileName"))
+        except:
+            pass
+        self.controller.setLockerConfig({"adFileName": filename})
+        self.adVideoSource = imageio.get_reader(filename)
 
     def pageDidShown(self):
         self.after(10, self.showFrame)
@@ -237,11 +251,8 @@ class AdPage(tk.Frame):
     def showFrame(self):
         if not self.isAdVideoFromImgs:
             if self.adVideoSource is None:
-                if self.controller.getLockerConfig("adFileName") is None:
-                    self.after(100, self.showFrame)
-                    return
-                adFileName = "/home/alarm/" + self.controller.getLockerConfig("adFileName")
-                self.adVideoSource = imageio.get_reader(adFileName)
+                self.after(100, self.showFrame)
+                return
             
             try:
                 image = self.adVideoSource.get_next_data()
@@ -252,6 +263,7 @@ class AdPage(tk.Frame):
             except:
                 self.adVideoI = 0
                 self.isAdVideoFromImgs = True
+                self.adVideoFPS = self.adVideoSource.get_meta_data()["fps"]
 
         if self.isAdVideoFromImgs:
             imgtk = self.adVideoImgs[self.adVideoI]
@@ -259,7 +271,7 @@ class AdPage(tk.Frame):
 
         self.adVideolabel.imgtk = imgtk
         self.adVideolabel.configure(image=imgtk)
-        self.after(10, self.showFrame)
+        self.after(int(1000 / self.adVideoFPS), self.showFrame)
 
 
 async def async_download_file(url, callback=None):
