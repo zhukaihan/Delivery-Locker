@@ -12,11 +12,15 @@ from PIL import ImageTk, Image
 import json
 import asyncio
 import os
+import pyzbar.pyzbar as pyzbar
+import multiprocessing
+import subprocess
 
 LOCKER_CONFIG_FILE = "lockerConfig"
 API_BASE_URL = "http://shgreenpool.com/Delivery-Locker-Server/"
 LOCKER_CONFIG_API = "locker.php"
 AD_CONFIG_API = "ad.php"
+PACKAGE_STORE_API = "package.php"
 
 class Application(tk.Tk):
 
@@ -123,19 +127,20 @@ class WifiConfigPage(tk.Frame):
                 self.wifiList.insert(tk.END, cell.ssid)
 
     def connectWifi(self):
+        self.wifiAlertLabelStr.set("WiFi正在连接")
         ssid = self.wifiList.get(self.wifiList.curselection()[0])
         passwd = self.wifiPasswdEntry.get()
         
+        connectResult = False
         try:
             connectResult = Wifi.Connect(str(ssid), str(passwd))
-        
-            if connectResult is False:
-                self.wifiAlertLabelStr.set("WiFi无法连接，请检查密码是否正确")
-            else:
-                self.wifiAlertLabelStr.set("连接成功")
-                self.goToNextPage()
         except:
+            pass
+        if connectResult is False:
             self.wifiAlertLabelStr.set("WiFi无法连接，请检查密码是否正确")
+        else:
+            self.wifiAlertLabelStr.set("连接成功")
+            self.goToNextPage()
 
     def goToNextPage(self):
         self.controller.showPage("LockerConfigPage")
@@ -151,17 +156,19 @@ class LockerConfigPage(tk.Frame):
         label = tk.Label(self, text="设置设备")
         label.pack(side="top", fill="x", pady=10)
 
+        self.alertLabelStr = tk.StringVar()
+        self.alertLabel = tk.Label(self, textvariable=self.alertLabelStr)
+        self.alertLabel.pack()
+
         # The verify button is initially unclickable. 
         self.verifyButton = tk.Button(self, text="验证", state=tk.DISABLED,
                             command=lambda: self.verifyLocker())
         self.verifyButton.pack()
 
-        self.alertLabelStr = tk.StringVar()
-        self.alertLabel = tk.Label(self, textvariable=self.alertLabelStr)
-        self.alertLabel.pack()
-
 
     def pageDidShown(self):
+        self.alertLabelStr.set("正在设置设备ID")
+
         # Check if lockerId has been configured. 
         self.lockerId = self.controller.getLockerConfig("lockerId")
 
@@ -175,7 +182,7 @@ class LockerConfigPage(tk.Frame):
         self.lockerId = "FAILED"
         i = 0
         while self.lockerId == "FAILED" and i < 10: # Try 10 times. 
-            self.alertLabelStr.set("尝试连接中。。。")
+            self.alertLabelStr.set("正在尝试获取新的设备ID")
             r = requests.post(url=self.API_URL)
             self.lockerId = r.text
             i += 1
@@ -185,6 +192,7 @@ class LockerConfigPage(tk.Frame):
         self.verifyButton.config(state="normal")
 
     def verifyLocker(self):
+        self.alertLabelStr.set("正在尝试验证设备ID")
         # User should finished adding lockerId to the user's Wechat. 
         # Verify if added accountId by a GET request to the server. 
         r = requests.get(url=self.API_URL, params={"lockerId": self.lockerId})
@@ -211,70 +219,100 @@ class AdPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.adVideolabel = tk.Label(self, text="广告")
-        self.adVideolabel.pack(side=tk.TOP, fill=tk.BOTH)
+        self.adVideoButton = tk.Button(self, text="触摸屏幕以开始", compound="center", command=self.goToNextPage)
+        self.adVideoButton.pack(fill=tk.BOTH, expand=1)
 
-        button = tk.Button(self, text="Click to open locker",
-                           command=lambda: controller.showPage("LockerPage"))
-        button.pack(side=tk.BOTTOM, fill=tk.X)
-
-        adFileName = self.controller.getLockerConfig("adFileName")
         self.adVideoSource = None
         self.adVideoImgs = []
         self.adVideoI = 0
         self.adVideoFPS = 100
         self.isAdVideoFromImgs = False
         
-        r = requests.get(url=self.API_URL)
-        if adFileName is None or r.text > adFileName: # The ad has been updated or file. Download new ad. 
-            download_file(API_BASE_URL + r.text, callback=self.setAndLoadNewAdVideo)
-        else:
-            try:
-                self.adVideoSource = imageio.get_reader(adFileName)
-            except:
-                download_file(API_BASE_URL + r.text, callback=self.setAndLoadNewAdVideo)
-        
 
-    def setAndLoadNewAdVideo(self, filename):
-        try:
-            adFileName = self.controller.getLockerConfig("adFileName")
-            if filename != adFileName:
-                os.remove(self.controller.getLockerConfig("adFileName"))
-        except:
-            pass
+    def downloadAd(self, adName):
+        filename = adName
+        download_file(API_BASE_URL + adName)
+    #     downloadProcess = multiprocessing.Process(target=download_file, args=(API_BASE_URL + adName, ))
+    #     downloadProcess.start()
+    #     # self.after(1, lambda : self.downloadingAdVideo(downloadProcess, adName))
+    #     self.downloadingAdVideo(downloadProcess, adName)
+
+    # def downloadingAdVideo(self, downloadProcess, filename):
+    #     downloadProcess.join()
+
+        # After download, load the new file. 
         self.controller.setLockerConfig({"adFileName": filename})
         self.adVideoSource = imageio.get_reader(filename)
 
+    def setAdVideoSource(self):
+        # Check if a download is required. 
+        r = requests.get(url=self.API_URL)
+        adFileName = self.controller.getLockerConfig("adFileName")
+        if adFileName is None or r.text > adFileName: # The ad has been updated or has never downloaded an ad. Remove old ad. Download new ad. 
+            try:
+                os.remove(self.controller.getLockerConfig("adFileName"))
+            except:
+                pass
+            self.downloadAd(r.text)
+        else:
+            try:
+                # Open existing ad. 
+                self.adVideoSource = imageio.get_reader(adFileName)
+            except:
+                # File corrupted, download again. 
+                self.downloadAd(r.text)
+        
+
     def pageDidShown(self):
+        if self.adVideoSource is None:
+            self.setAdVideoSource()
+        self.pageIsShown = True
         self.after(10, self.showFrame)
     
     def showFrame(self):
+        if not self.pageIsShown:
+            # Stop updating frames when page is not shown. 
+            return
+        
         if not self.isAdVideoFromImgs:
+            # Ad video frames are from the imageio reader. 
+
             if self.adVideoSource is None:
+                # Keep checking if a new ad has not yet been opened or downloaded. 
                 self.after(100, self.showFrame)
                 return
             
             try:
-                image = self.adVideoSource.get_next_data()
+                # Get image frame from imageio reader. 
+                image = Image.fromarray(self.adVideoSource.get_next_data()).resize((self.controller.winfo_screenwidth(), self.controller.winfo_screenheight()))
 
-                imgtk = ImageTk.PhotoImage(image=Image.fromarray(image))
+                imgtk = ImageTk.PhotoImage(image=image)
                 self.adVideoImgs.append(imgtk)
                 self.adVideoI += 1
             except:
+                # Get image frame from imageio reader failed, all frames has read to adVideoImgs. 
+                # From now on, read frames from adVideoImgs. 
                 self.adVideoI = 0
                 self.isAdVideoFromImgs = True
                 self.adVideoFPS = self.adVideoSource.get_meta_data()["fps"]
 
         if self.isAdVideoFromImgs:
+            # Ad video frames are from the images. 
             imgtk = self.adVideoImgs[self.adVideoI]
             self.adVideoI = (self.adVideoI + 1) % len(self.adVideoImgs)
 
-        self.adVideolabel.imgtk = imgtk
-        self.adVideolabel.configure(image=imgtk)
+        # Show frame. 
+        self.adVideoButton.imgtk = imgtk
+        self.adVideoButton.configure(image=imgtk)
+        # Schedule next frame. 
         self.after(int(1000 / self.adVideoFPS), self.showFrame)
 
+    def goToNextPage(self):
+        self.pageIsShown = False
+        self.controller.showPage("LockerPage")
 
-async def async_download_file(url, callback=None):
+
+def download_file(url):
     local_filename = url.split('/')[-1]
     # NOTE the stream=True parameter below
     with requests.get(url, stream=True) as r:
@@ -283,15 +321,8 @@ async def async_download_file(url, callback=None):
             for chunk in r.iter_content(chunk_size=8192): 
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
-    try:
-        if not (callback is None):
-            callback(local_filename)
-    except:
-        pass
     return local_filename
 
-def download_file(url, callback=None):
-    asyncio.run(async_download_file(url, callback))
 
 
 class LockerPage(tk.Frame):
@@ -299,11 +330,71 @@ class LockerPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        label = tk.Label(self, text="放东西")
-        label.pack(side="top", fill="x", pady=10)
-        button = tk.Button(self, text="Play Ad after 30 secs",
-                           command=lambda: controller.showPage("AdPage"))
-        button.pack()
+        
+        self.adButton = tk.Button(self, text="取消", command=self.goToAdPage)
+        self.adButton.pack()
+
+        self.trackingNumImg = tk.Label(self)
+        self.trackingNumImg.pack()
+
+        self.trackingNumEntry = tk.Entry(self)
+        self.trackingNumEntry.pack(pady=10)
+        
+        self.confirmTrackingNumButton = tk.Button(self, text="确认", command=self.sendTrackingNumber)
+        self.confirmTrackingNumButton.pack()
+
+        self.kb = vKeyboard(parent=self, attach=self.trackingNumEntry)
+        self.kb.listenForEntry(self.trackingNumEntry)
+
+        self.camera = imageio.get_reader("<video0>", size="1280x720", pixelformat="yuyv422")
+        cmd = "v4l2-ctl -c focus_auto=0,focus_absolute=200"
+        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+        _, _ = p.communicate()
+
+    def pageDidShown(self):
+        self.pageIsShown = True
+        self.after(100, self.cameraFindZBar)
+
+    def cameraFindZBar(self):
+        if not self.pageIsShown:
+            return
+
+        image = Image.fromarray(self.camera.get_next_data()).convert("L")
+        imgtk = ImageTk.PhotoImage(image=image.resize((320, 200)))
+        self.trackingNumImg.imgtk = imgtk
+        self.trackingNumImg.configure(image=imgtk)
+
+        decodedObjects = pyzbar.decode(image)
+
+        if (len(decodedObjects) > 0):
+            trackingNum = decodedObjects[0].data.decode("utf-8")
+            self.trackingNumEntry.delete(0, tk.END)
+            self.trackingNumEntry.insert(0, trackingNum)
+
+            self.sendTrackingNumber()
+
+        self.after(100, self.cameraFindZBar)
+
+    def sendTrackingNumber(self):
+        trackingNum = self.trackingNumEntry.get()
+        r = requests.post(
+            url=API_BASE_URL + PACKAGE_STORE_API, 
+            data={
+                "trackingNum": trackingNum,
+                "lockerId": self.controller.getLockerConfig("lockerId")
+            }
+        )
+        if (r.text == "SUCCESS"):
+            self.goToNextPage()
+
+    def goToNextPage(self):
+        self.pageIsShown = False
+        self.controller.showPage("OpenLockerPage")
+
+    def goToAdPage(self):
+        self.pageIsShown = False
+        self.controller.showPage("AdPage")
+
 
 
 if __name__ == "__main__":
