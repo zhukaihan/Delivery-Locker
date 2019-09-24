@@ -67,6 +67,7 @@ class Application(tk.Tk):
         '''Show a frame for the given page name'''
         page = self.pages[page_name]
         page.tkraise()
+        self.update()
 
         try:
             page.pageDidShown()
@@ -110,13 +111,13 @@ class WifiConfigPage(tk.Frame):
         wifiConnectButton.pack()
 
         self.wifiAlertLabelStr = tk.StringVar()
+        self.wifiAlertLabelStr.set("正在搜索附近WiFi。。。")
         self.wifiAlertLabel = tk.Label(self, textvariable=self.wifiAlertLabelStr)
         self.wifiAlertLabel.pack()
 
         
         self.kb = vKeyboard(parent=self, attach=self.wifiPasswdEntry)
         self.kb.listenForEntry(self.wifiPasswdEntry)
-
 
     def pageDidShown(self):
         wifis = Wifi.SearchAndConnectKnown()
@@ -219,6 +220,9 @@ class AdPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        self.loadingLabel = tk.Label(self, text="正在加载")
+        self.loadingLabel.pack()
+
         self.adVideoButton = tk.Button(self, text="触摸屏幕以开始", compound="center", command=self.goToNextPage)
         self.adVideoButton.pack(fill=tk.BOTH, expand=1)
 
@@ -229,16 +233,12 @@ class AdPage(tk.Frame):
         self.isAdVideoFromImgs = False
         
 
-    def downloadAd(self, adName):
-        filename = adName
-        download_file(API_BASE_URL + adName)
-    #     downloadProcess = multiprocessing.Process(target=download_file, args=(API_BASE_URL + adName, ))
-    #     downloadProcess.start()
-    #     # self.after(1, lambda : self.downloadingAdVideo(downloadProcess, adName))
-    #     self.downloadingAdVideo(downloadProcess, adName)
-
-    # def downloadingAdVideo(self, downloadProcess, filename):
-    #     downloadProcess.join()
+    def downloadedAd(self, filename):
+        try:
+            if filename != self.controller.getLockerConfig("adFileName"):
+                os.remove(self.controller.getLockerConfig("adFileName"))
+        except:
+            pass
 
         # After download, load the new file. 
         self.controller.setLockerConfig({"adFileName": filename})
@@ -249,23 +249,20 @@ class AdPage(tk.Frame):
         r = requests.get(url=self.API_URL)
         adFileName = self.controller.getLockerConfig("adFileName")
         if adFileName is None or r.text > adFileName: # The ad has been updated or has never downloaded an ad. Remove old ad. Download new ad. 
-            try:
-                os.remove(self.controller.getLockerConfig("adFileName"))
-            except:
-                pass
-            self.downloadAd(r.text)
+            download_file(API_BASE_URL + r.text, self.downloadedAd)
         else:
             try:
                 # Open existing ad. 
                 self.adVideoSource = imageio.get_reader(adFileName)
             except:
                 # File corrupted, download again. 
-                self.downloadAd(r.text)
+                download_file(API_BASE_URL + r.text, self.downloadedAd)
         
 
     def pageDidShown(self):
         if self.adVideoSource is None:
             self.setAdVideoSource()
+        self.loadingLabel.pack_forget()
         self.pageIsShown = True
         self.after(10, self.showFrame)
     
@@ -312,7 +309,7 @@ class AdPage(tk.Frame):
         self.controller.showPage("LockerPage")
 
 
-def download_file(url):
+async def async_download_file(url, callback=None):
     local_filename = url.split('/')[-1]
     # NOTE the stream=True parameter below
     with requests.get(url, stream=True) as r:
@@ -321,7 +318,17 @@ def download_file(url):
             for chunk in r.iter_content(chunk_size=8192): 
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
+    
+    try:
+        if not (callback is None):
+            callback(local_filename)
+    except:
+        pass
+    
     return local_filename
+
+def download_file(url, callback=None):
+    asyncio.run(async_download_file(url, callback))
 
 
 
