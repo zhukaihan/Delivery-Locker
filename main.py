@@ -21,6 +21,16 @@ API_BASE_URL = "http://shgreenpool.com/Delivery-Locker-Server/"
 LOCKER_CONFIG_API = "locker.php"
 AD_CONFIG_API = "ad.php"
 PACKAGE_STORE_API = "package.php"
+OPEN_LOCKER_API = "openLockerRequest.php"
+
+class Lock():
+    def __init__(self):
+        # Setup GPIO. 
+        pass
+
+    def open(self):
+        # Set GPIO to on for 15 secs. 
+        pass
 
 class Application(tk.Tk):
 
@@ -35,6 +45,8 @@ class Application(tk.Tk):
                     self.lockerConfig = json.loads(lockerConfigFileContent)
         except:
             pass
+
+        self.lock = Lock()
 
         self.wm_attributes('-fullscreen', True)
         # w, h = self.winfo_screenwidth(), self.winfo_screenheight()
@@ -344,6 +356,11 @@ class LockerPage(tk.Frame):
         self.trackingNumImg = tk.Label(self)
         self.trackingNumImg.pack()
 
+        self.trackingAlertStr = tk.Variable()
+        self.trackingAlertStr.set("请扫描或手动输入快递跟踪码：")
+        self.trackingAlertLabel = tk.Label(self, textvariable=self.trackingAlertStr)
+        self.trackingAlertLabel.pack()
+
         self.trackingNumEntry = tk.Entry(self)
         self.trackingNumEntry.pack(pady=10)
         
@@ -360,6 +377,9 @@ class LockerPage(tk.Frame):
 
     def pageDidShown(self):
         self.pageIsShown = True
+        self.trackingNumEntry.delete(0, tk.END)
+        self.isProcessingTrackingNum = False
+        self.trackingAlertStr.set("请扫描或手动输入快递跟踪码：")
         self.after(100, self.cameraFindZBar)
 
     def cameraFindZBar(self):
@@ -374,29 +394,55 @@ class LockerPage(tk.Frame):
         decodedObjects = pyzbar.decode(image)
 
         if (len(decodedObjects) > 0):
-            trackingNum = decodedObjects[0].data.decode("utf-8")
-            self.trackingNumEntry.delete(0, tk.END)
-            self.trackingNumEntry.insert(0, trackingNum)
+            self.trackingNum = decodedObjects[0].data.decode("utf-8")
 
-            self.sendTrackingNumber()
+            if (self.trackingNum[:10] == "OPENLOCKER"):
+                self.openLocker(self.trackingNum)
+            else:
+                self.trackingNumEntry.delete(0, tk.END)
+                self.trackingNumEntry.insert(0, self.trackingNum)
+                self.trackingAlertStr.set("正在处理。。。")
+                self.controller.update()
+
+                self.after(1, lambda: self.sendTrackingNumber(self.trackingNum))
 
         self.after(100, self.cameraFindZBar)
 
-    def sendTrackingNumber(self):
-        trackingNum = self.trackingNumEntry.get()
+    def openLocker(self, passwd):
         r = requests.post(
-            url=API_BASE_URL + PACKAGE_STORE_API, 
+            url=API_BASE_URL + OPEN_LOCKER_API, 
             data={
-                "trackingNum": trackingNum,
-                "lockerId": self.controller.getLockerConfig("lockerId")
+                "lockerId": self.controller.getLockerConfig("lockerId"), 
+                "passwd": passwd
             }
         )
         if (r.text == "SUCCESS"):
-            self.goToNextPage()
+            self.controller.lock.open()
+
+    def sendTrackingNumber(self, trackingNum):
+        if (self.isProcessingTrackingNum):
+            return
+        
+        self.isProcessingTrackingNum = True
+        r = requests.post(
+            url=API_BASE_URL + PACKAGE_STORE_API, 
+            data={
+                "packageId": trackingNum, 
+                "lockerId": self.controller.getLockerConfig("lockerId")
+            }
+        )
+        if (r.text != "FAILED"):
+            packageInfo = json.loads(r.text)
+            self.controller.lock.open()
+            self.trackingAlertStr.set(packageInfo["deliveryPerson"]["name"] + "请将快递放入箱子中，谢谢。")
+            self.after(10000, self.goToAdPage)
+            # self.goToNextPage()
+        else:
+            self.isProcessingTrackingNum = False
 
     def goToNextPage(self):
         self.pageIsShown = False
-        self.controller.showPage("OpenLockerPage")
+        self.controller.showPage("OpenLockerForDeliveryPage")
 
     def goToAdPage(self):
         self.pageIsShown = False
