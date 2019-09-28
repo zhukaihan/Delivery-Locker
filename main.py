@@ -15,6 +15,7 @@ import os
 import pyzbar.pyzbar as pyzbar
 import multiprocessing
 import subprocess
+from io import BytesIO
 
 LOCKER_CONFIG_FILE = "lockerConfig"
 API_BASE_URL = "http://shgreenpool.com/Delivery-Locker-Server/"
@@ -23,14 +24,15 @@ AD_CONFIG_API = "ad.php"
 PACKAGE_STORE_API = "package.php"
 OPEN_LOCKER_API = "openLockerRequest.php"
 
-class Lock():
-    def __init__(self):
-        # Setup GPIO. 
-        pass
+LOCK_GPIO_CHIP = "pinctrl-bcm2835"
+LOCK_GPIO_PIN = 4
+LOCK_OPEN_SECS = 2
 
+class Lock():
     def open(self):
-        # Set GPIO to on for 15 secs. 
-        pass
+        # Set GPIO to on for a few secs. 
+        cmd = "gpioset --mode=time --sec=" + str(LOCK_OPEN_SECS) + " " + LOCK_GPIO_CHIP + " " + str(LOCK_GPIO_PIN) + "=1"
+        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
 
 class Application(tk.Tk):
 
@@ -141,6 +143,7 @@ class WifiConfigPage(tk.Frame):
 
     def connectWifi(self):
         self.wifiAlertLabelStr.set("WiFi正在连接")
+        self.controller.update()
         ssid = self.wifiList.get(self.wifiList.curselection()[0])
         passwd = self.wifiPasswdEntry.get()
         
@@ -173,6 +176,9 @@ class LockerConfigPage(tk.Frame):
         self.alertLabel = tk.Label(self, textvariable=self.alertLabelStr)
         self.alertLabel.pack()
 
+        self.qrImgLabel = tk.Label(self)
+        self.qrImgLabel.pack()
+
         # The verify button is initially unclickable. 
         self.verifyButton = tk.Button(self, text="验证", state=tk.DISABLED,
                             command=lambda: self.verifyLocker())
@@ -181,6 +187,7 @@ class LockerConfigPage(tk.Frame):
 
     def pageDidShown(self):
         self.alertLabelStr.set("正在设置设备ID")
+        self.controller.update()
 
         # Check if lockerId has been configured. 
         self.lockerId = self.controller.getLockerConfig("lockerId")
@@ -192,26 +199,53 @@ class LockerConfigPage(tk.Frame):
         
         # If the lockerId doesn't exist, the locker does not have a lockerId. 
         # We need to do a POST to the server to get a new lockerId. 
-        self.lockerId = "FAILED"
+        lockerIdResponse = "FAILED"
         i = 0
-        while self.lockerId == "FAILED" and i < 10: # Try 10 times. 
+        while lockerIdResponse == "FAILED" and i < 10: # Try 10 times. 
             self.alertLabelStr.set("正在尝试获取新的设备ID")
-            r = requests.post(url=self.API_URL)
-            self.lockerId = r.text
+            self.controller.update()
+            r = requests.post(url=self.API_URL, timeout=10)
+            lockerIdResponse = r.text
             i += 1
+
+        # If get new lockerId failed. 
+        if lockerIdResponse == "FAILED":
+            self.alertLabelStr.set("获取新的设备ID失败")
+            self.controller.update()
+            return
         
-        self.alertLabelStr.set("此设备ID为" + self.lockerId + "，请打开微信服务号添加此设备。添加完毕后点击下方按钮验证。")
+        # Parse JSON and get lockerId and qrUrl. 
+        try:
+            lockerIdJson = json.loads(lockerIdResponse)
+        except:
+            self.alertLabelStr.set("获取新的设备ID失败")
+            self.controller.update()
+            return
+        self.lockerId = lockerIdJson["lockerId"]
+        self.lockerName = lockerIdJson["lockerName"]
+        lockerIdQrUrl = lockerIdJson["qrUrl"]
+
+        # Load and display QR code. 
+        r = requests.get(lockerIdQrUrl, timeout=30)
+        imgData = BytesIO(r.content)
+        imgtk = ImageTk.PhotoImage(Image.open(imgData).resize((300, 300)))
+        self.qrImgLabel.imgtk = imgtk
+        self.qrImgLabel.configure(image=imgtk)
+        
+        self.alertLabelStr.set("请打开微信扫描下方二维码以添加此设备，编号为" + self.lockerName + "。添加完毕后点击下方按钮验证。")
         # Set the verifyButton to be clickable. 
         self.verifyButton.config(state="normal")
+        self.controller.update()
 
     def verifyLocker(self):
         self.alertLabelStr.set("正在尝试验证设备ID")
+        self.controller.update()
         # User should finished adding lockerId to the user's Wechat. 
         # Verify if added accountId by a GET request to the server. 
-        r = requests.get(url=self.API_URL, params={"lockerId": self.lockerId})
+        r = requests.get(url=self.API_URL, params={"lockerId": self.lockerId}, timeout=30)
 
         if r.text == "FAILED": # Have not yet added an accountId. 
-            self.alertLabelStr.set("未验证成功。此设备ID为" + self.lockerId + "，请打开微信服务号添加此设备。添加完毕后点击下方按钮验证。")
+            self.alertLabelStr.set("未验证成功。请打开微信扫描下方二维码以添加此设备，编号为" + self.lockerName + "。添加完毕后点击下方按钮验证。")
         elif r.text == "SUCCESS": # Added an accountId. 
             self.alertLabelStr.set("验证成功。")
 
@@ -258,7 +292,7 @@ class AdPage(tk.Frame):
 
     def setAdVideoSource(self):
         # Check if a download is required. 
-        r = requests.get(url=self.API_URL)
+        r = requests.get(url=self.API_URL, timeout=30)
         adFileName = self.controller.getLockerConfig("adFileName")
         if adFileName is None or r.text > adFileName: # The ad has been updated or has never downloaded an ad. Remove old ad. Download new ad. 
             download_file(API_BASE_URL + r.text, self.downloadedAd)
@@ -399,29 +433,39 @@ class LockerPage(tk.Frame):
             if (self.trackingNum[:10] == "OPENLOCKER"):
                 self.openLocker(self.trackingNum)
             else:
-                self.trackingNumEntry.delete(0, tk.END)
-                self.trackingNumEntry.insert(0, self.trackingNum)
-                self.trackingAlertStr.set("正在处理。。。")
-                self.controller.update()
-
-                self.after(1, lambda: self.sendTrackingNumber(self.trackingNum))
+                # self.after(1, lambda: self.sendTrackingNumber(self.trackingNum))
+                self.sendTrackingNumber(self.trackingNum)
 
         self.after(100, self.cameraFindZBar)
 
     def openLocker(self, passwd):
-        r = requests.post(
+        self.trackingAlertStr.set("正在处理。。。" + passwd + self.controller.getLockerConfig("lockerId"))
+        self.controller.update()
+        r = requests.put(
             url=API_BASE_URL + OPEN_LOCKER_API, 
             data={
                 "lockerId": self.controller.getLockerConfig("lockerId"), 
                 "passwd": passwd
-            }
+            }, 
+            timeout=30
         )
         if (r.text == "SUCCESS"):
+            self.trackingAlertStr.set("开箱成功。")
+            self.controller.update()
             self.controller.lock.open()
+            self.after(5000, self.goToAdPage)
+        else:
+            self.trackingAlertStr.set("不正确，请重试。")
+            self.controller.update()
 
     def sendTrackingNumber(self, trackingNum):
         if (self.isProcessingTrackingNum):
             return
+            
+        self.trackingNumEntry.delete(0, tk.END)
+        self.trackingNumEntry.insert(0, self.trackingNum)
+        self.trackingAlertStr.set("正在处理。。。")
+        self.controller.update()
         
         self.isProcessingTrackingNum = True
         r = requests.post(
@@ -429,15 +473,18 @@ class LockerPage(tk.Frame):
             data={
                 "packageId": trackingNum, 
                 "lockerId": self.controller.getLockerConfig("lockerId")
-            }
+            }, 
+            timeout=30
         )
         if (r.text != "FAILED"):
             packageInfo = json.loads(r.text)
+            self.trackingAlertStr.set("请将快递放入箱子中，谢谢。")
+            self.controller.update()
             self.controller.lock.open()
-            self.trackingAlertStr.set(packageInfo["deliveryPerson"]["name"] + "请将快递放入箱子中，谢谢。")
-            self.after(10000, self.goToAdPage)
+            self.after(5000, self.goToAdPage)
             # self.goToNextPage()
         else:
+            self.trackingAlertStr.set("无法识别此快递码")
             self.isProcessingTrackingNum = False
 
     def goToNextPage(self):
