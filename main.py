@@ -412,7 +412,7 @@ class LockerPage(tk.Frame):
     def pageDidShown(self):
         self.pageIsShown = True
         self.trackingNumEntry.delete(0, tk.END)
-        self.isProcessingTrackingNum = False
+        self.isProcessing = False
         self.trackingAlertStr.set("请扫描或手动输入快递跟踪码：")
         self.after(100, self.cameraFindZBar)
 
@@ -439,8 +439,14 @@ class LockerPage(tk.Frame):
         self.after(100, self.cameraFindZBar)
 
     def openLocker(self, passwd):
-        self.trackingAlertStr.set("正在处理。。。" + passwd + self.controller.getLockerConfig("lockerId"))
+        if (self.isProcessing):
+            return
+            
+        self.trackingAlertStr.set("正在处理开箱请求。。。")
         self.controller.update()
+        
+        self.isProcessing = True
+
         r = requests.put(
             url=API_BASE_URL + OPEN_LOCKER_API, 
             data={
@@ -457,9 +463,10 @@ class LockerPage(tk.Frame):
         else:
             self.trackingAlertStr.set("不正确，请重试。")
             self.controller.update()
+            self.isProcessing = False
 
     def sendTrackingNumber(self, trackingNum):
-        if (self.isProcessingTrackingNum):
+        if (self.isProcessing):
             return
             
         self.trackingNumEntry.delete(0, tk.END)
@@ -467,7 +474,7 @@ class LockerPage(tk.Frame):
         self.trackingAlertStr.set("正在处理。。。")
         self.controller.update()
         
-        self.isProcessingTrackingNum = True
+        self.isProcessing = True
         r = requests.post(
             url=API_BASE_URL + PACKAGE_STORE_API, 
             data={
@@ -485,7 +492,8 @@ class LockerPage(tk.Frame):
             # self.goToNextPage()
         else:
             self.trackingAlertStr.set("无法识别此快递码")
-            self.isProcessingTrackingNum = False
+            self.controller.update()
+            self.isProcessing = False
 
     def goToNextPage(self):
         self.pageIsShown = False
